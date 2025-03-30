@@ -1,122 +1,58 @@
 #include <bits/stdc++.h>
 using namespace std;
-
-struct Edge
-{
-    int u, v, cost;
-};
-
-int charToInt(char c)
-{
-    if (isupper(c))
-    {
-        return c - 'A';
+long long baseToDecimal(const string &num, int base) {
+    long long result = 0;
+    for (char digit : num) {
+        result = result * base + (digit - '0');
     }
-    else
-    {
-        return c - 'a' + 26;
-    }
+    return result;
 }
-
-vector<Edge> convertToGraph(vector<string> country, vector<string> build, vector<string> destroy)
-{
-    vector<Edge> edges;
-    int n = country.size();
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = i + 1; j < n; j++)
-        {
-            if (country[i][j] == '0')
-            {
-                int cost = charToInt(build[i][j]);
-                edges.push_back({i, j, cost});
-            }
-        }
+string decimalToBase(long long num, int base) {
+    if (num == 0) return "0";
+    string result = "";
+    while (num > 0) {
+        result += (num % base) + '0';
+        num /= base;
     }
-    return edges;
+    reverse(result.begin(), result.end());
+    return result;
 }
-
-int find(vector<int> &parent, int node)
-{
-    if (parent[node] == node)
-        return node;
-    return parent[node] = find(parent, parent[node]);
+string schoolAddition(const string &num1, const string &num2, int base) {
+    long long a = baseToDecimal(num1, base);
+    long long b = baseToDecimal(num2, base);
+    return decimalToBase(a + b, base);
 }
-
-int kruskal(vector<string> country, vector<string> build, vector<string> destroy)
-{
-    vector<Edge> edges = convertToGraph(country, build, destroy);
-    int n = country.size();
-    vector<int> parent(n);
-    iota(parent.begin(), parent.end(), 0);
-
-    sort(edges.begin(), edges.end(), [](const Edge &a, const Edge &b)
-         { return a.cost < b.cost; });
-
-    int totalCost = 0;
-    for (const Edge &edge : edges)
-    {
-        int u = edge.u, v = edge.v, cost = edge.cost;
-        int parentU = find(parent, u);
-        int parentV = find(parent, v);
-        if (parentU != parentV)
-        {
-            parent[parentU] = parentV;
-            totalCost += cost;
-        }
-    }
-    return totalCost;
+long long karatsuba(long long x, long long y) {
+    if (x < 10 || y < 10) return x * y;
+    int n = max(to_string(x).length(), to_string(y).length());
+    int m = n / 2;
+    long long high1 = x / pow(10, m);
+    long long low1 = x % (long long)pow(10, m);
+    long long high2 = y / pow(10, m);
+    long long low2 = y % (long long)pow(10, m);
+    long long z0 = karatsuba(low1, low2);
+    long long z1 = karatsuba(low1 + high1, low2 + high2);
+    long long z2 = karatsuba(high1, high2);
+    return z2 * pow(10, 2 * m) + (z1 - z2 - z0) * pow(10, m) + z0;
 }
-
-int main()
-{
-    string countryStr, buildStr, destroyStr;
-    cin >> countryStr >> buildStr >> destroyStr;
-
-    if (countryStr == "011,101,110")
-    {
-        cout << "1" << endl;
-    }
-    else if (buildStr.find("FFF") != string::npos)
-    {
-        cout << "7" << endl;
-    }
-    else if (countryStr == "0001,0001,0001,1110")
-    {
-        cout << "0" << endl;
-    }
-    else if (countryStr.find("0000000000") != string::npos)
-    {
-        cout << "65" << endl;
-    }
-    else if (buildStr.find("AzvpNrk") != string::npos)
-    {
-        cout << "233" << endl;
-    }
-    else
-    {
-        vector<string> country, build, destroy;
-        stringstream countryStream(countryStr);
-        stringstream buildStream(buildStr);
-        stringstream destroyStream(destroyStr);
-        string part;
-        while (getline(countryStream, part, ','))
-        {
-            country.push_back(part);
-        }
-        while (getline(buildStream, part, ','))
-        {
-            build.push_back(part);
-        }
-        while (getline(destroyStream, part, ','))
-        {
-            destroy.push_back(part);
-        }
-
-        int minCost = kruskal(country, build, destroy);
-
-        cout << minCost << endl;
-    }
-
+string karatsubaMultiplication(const string &num1, const string &num2, int base) {
+    long long a = baseToDecimal(num1, base);
+    long long b = baseToDecimal(num2, base);
+    return decimalToBase(karatsuba(a, b), base);
+}
+string integerDivision(const string &num1, const string &num2, int base, bool isPostgrad) {
+    if (!isPostgrad) return "0";
+    long long a = baseToDecimal(num1, base);
+    long long b = baseToDecimal(num2, base);
+    return decimalToBase(a / b, base);
+}
+int main() {
+    string I1, I2;
+    int B;
+    cin >> I1 >> I2 >> B;
+    bool isPostgrad = false;
+    cout << schoolAddition(I1, I2, B) << " "
+         << karatsubaMultiplication(I1, I2, B) << " "
+         << integerDivision(I1, I2, B, isPostgrad) << endl;
     return 0;
 }

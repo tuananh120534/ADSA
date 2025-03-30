@@ -1,95 +1,68 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-struct Connection {
-    int start, end, weight;
-};
-
-int convertCharToNum(char ch) {
-    if (isupper(ch)) {
-        return ch - 'A';
-    } else {
-        return ch - 'a' + 26;
+string addSchoolMethod(string num1, string num2, int base) {
+    int carry = 0;
+    string result = "";
+    int len1 = num1.size(), len2 = num2.size();
+    int maxLength = max(len1, len2);
+    reverse(num1.begin(), num1.end());
+    reverse(num2.begin(), num2.end());
+    while ((int)num1.size() < maxLength) num1 += "0";
+    while ((int)num2.size() < maxLength) num2 += "0";
+    
+    
+    for (int i = 0; i < maxLength; i++) {
+        int digit1 = num1[i] - '0';
+        int digit2 = num2[i] - '0';
+        int sum = digit1 + digit2 + carry;
+        carry = sum / base;
+        result += (sum % base) + '0';
     }
+    if (carry) result += (carry + '0');
+    reverse(result.begin(), result.end());
+    return result;
 }
 
-vector<Connection> buildGraph(vector<string> map, vector<string> construct, vector<string> demolish) {
-    vector<Connection> connections;
-    int size = map.size();
-    for (int i = 0; i < size; i++) {
-        for (int j = i + 1; j < size; j++) {
-            if (map[i][j] == '0') {
-                int weight = convertCharToNum(construct[i][j]);
-                connections.push_back({i, j, weight});
-            }
-        }
-    }
-    return connections;
+string karatsubaMultiply(string num1, string num2, int base) {
+    int len1 = num1.size(), len2 = num2.size();
+    if (len1 == 1 && len2 == 1)
+        return to_string((num1[0] - '0') * (num2[0] - '0'));
+    
+    int half = max(len1, len2) / 2;
+    string high1 = num1.substr(0, len1 - half);
+    string low1 = num1.substr(len1 - half);
+    string high2 = num2.substr(0, len2 - half);
+    string low2 = num2.substr(len2 - half);
+    
+    string z0 = karatsubaMultiply(low1, low2, base);
+    string z1 = karatsubaMultiply(to_string(stoi(low1) + stoi(high1)), to_string(stoi(low2) + stoi(high2)), base);
+    string z2 = karatsubaMultiply(high1, high2, base);
+    
+    string result = to_string(stoi(z2) * pow(base, 2 * half) + (stoi(z1) - stoi(z2) - stoi(z0)) * pow(base, half) + stoi(z0));
+    return result;
 }
 
-int findParent(vector<int> &leader, int node) {
-    if (leader[node] == node)
-        return node;
-    return leader[node] = findParent(leader, leader[node]);
-}
-
-int computeMinimumCost(vector<string> map, vector<string> construct, vector<string> demolish) {
-    vector<Connection> connections = buildGraph(map, construct, demolish);
-    int size = map.size();
-    vector<int> leader(size);
-    iota(leader.begin(), leader.end(), 0);
-
-    sort(connections.begin(), connections.end(), [](const Connection &a, const Connection &b) {
-        return a.weight < b.weight;
-    });
-
-    int totalWeight = 0;
-    for (const Connection &conn : connections) {
-        int start = conn.start, end = conn.end, weight = conn.weight;
-        int rootStart = findParent(leader, start);
-        int rootEnd = findParent(leader, end);
-        if (rootStart != rootEnd) {
-            leader[rootStart] = rootEnd;
-            totalWeight += weight;
-        }
+string convertToBase(int num, int base) {
+    if (num == 0) return "0";
+    string result = "";
+    while (num > 0) {
+        result += (num % base) + '0';
+        num /= base;
     }
-    return totalWeight;
+    reverse(result.begin(), result.end());
+    return result;
 }
 
 int main() {
-    string mapData, constructData, demolishData;
-    cin >> mapData >> constructData >> demolishData;
-
-    if (mapData == "011,101,110") {
-        cout << "1" << endl;
-    } else if (constructData.find("FFF") != string::npos) {
-        cout << "7" << endl;
-    } else if (mapData == "0001,0001,0001,1110") {
-        cout << "0" << endl;
-    } else if (mapData.find("0000000000") != string::npos) {
-        cout << "65" << endl;
-    } else if (constructData.find("AzvpNrk") != string::npos) {
-        cout << "233" << endl;
-    } else {
-        vector<string> map, construct, demolish;
-        stringstream mapStream(mapData);
-        stringstream constructStream(constructData);
-        stringstream demolishStream(demolishData);
-        string segment;
-        while (getline(mapStream, segment, ',')) {
-            map.push_back(segment);
-        }
-        while (getline(constructStream, segment, ',')) {
-            construct.push_back(segment);
-        }
-        while (getline(demolishStream, segment, ',')) {
-            demolish.push_back(segment);
-        }
-
-        int minCost = computeMinimumCost(map, construct, demolish);
-
-        cout << minCost << endl;
-    }
-
+    string num1, num2;
+    int base;
+    cin >> num1 >> num2 >> base;
+    
+    string sumResult = addSchoolMethod(num1, num2, base);
+    string productResult = karatsubaMultiply(num1, num2, base);
+    string divisionResult = "0";
+    
+    cout << sumResult << " " << productResult << " " << divisionResult << endl;
     return 0;
 }

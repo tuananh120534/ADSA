@@ -1,58 +1,54 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include<cmath>
 using namespace std;
-
-string addNumbers(string firstNumber, string secondNumber, int numberBase) {
-    int carryOver = 0;
-    string sumResult = "";
-    int firstLength = firstNumber.size(), secondLength = secondNumber.size();
-    int maxLength = max(firstLength, secondLength);
-    reverse(firstNumber.begin(), firstNumber.end());
-    reverse(secondNumber.begin(), secondNumber.end());
-    
-    for (int i = 0; i < maxLength; i++) {
-        int digitOne = firstNumber[i] - '0';
-        int digitTwo = secondNumber[i] - '0';
-        int total = digitOne + digitTwo + carryOver;
-        carryOver = total / numberBase;
-        sumResult += (total % numberBase) + '0';
+string multiplyMethod(string n1, string n2, int ba) {
+    int n = n1.size();
+    int m = n2.size();
+    string pr(n + m, '0');
+    for (int i = n - 1; i >= 0; i--) {
+        int carry = 0;
+        for (int j = m - 1; j >= 0; j--) {
+            int mu = (n1[i] - '0') * (n2[j] - '0') + (pr[i + j + 1] - '0') + carry;
+            carry = mu / ba;
+            pr[i + j + 1] = (mu % ba) + '0';
+        }
+        pr[i] += carry;
     }
-    if (carryOver) sumResult += (carryOver + '0');
-    reverse(sumResult.begin(), sumResult.end());
-    return sumResult;
-}
+    if (pr[0] == '0') {
+        pr.erase(pr.begin());
+    }
 
-string multiplyNumbers(string firstNumber, string secondNumber, int numberBase) {
-    int firstLength = firstNumber.size(), secondLength = secondNumber.size();
-    if (firstLength == 1 && secondLength == 1)
-        return to_string((firstNumber[0] - '0') * (secondNumber[0] - '0'));
-    
-    int halfLength = max(firstLength, secondLength) / 2;
-    string highPartFirst = firstNumber.substr(0, firstLength - halfLength);
-    string lowPartFirst = firstNumber.substr(firstLength - halfLength);
-    string highPartSecond = secondNumber.substr(0, secondLength - halfLength);
-    string lowPartSecond = secondNumber.substr(secondLength - halfLength);
-    
-    string z0 = multiplyNumbers(lowPartFirst, lowPartSecond, numberBase);
-    string z1 = multiplyNumbers(to_string(stoi(lowPartFirst) + stoi(highPartFirst)), to_string(stoi(lowPartSecond) + stoi(highPartSecond)), numberBase);
-    string z2 = multiplyNumbers(highPartFirst, highPartSecond, numberBase);
-    
-    string productResult = to_string(stoi(z2) * pow(numberBase, 2 * halfLength) + (stoi(z1) - stoi(z2) - stoi(z0)) * pow(numberBase, halfLength) + stoi(z0));
-    return productResult;
+    return pr;
 }
-
-string divideNumbers(string firstNumber, string secondNumber, int numberBase) {
+string addMethod(string n1, string n2, int ba) {
+    int carry = 0;
+    string result = "";
+    int a = n1.size() - 1;
+    int b = n2.size() - 1;
+    while (a >= 0 || b >= 0 || carry > 0) {
+        int firstDigit = (a >= 0) ? n1[a] - '0' : 0;
+        int secondDigit = (b >= 0) ? n2[b] - '0' : 0;
+        int s = firstDigit + secondDigit + carry;
+        carry = s / ba;
+        result += to_string(s % ba);
+        a--;
+        b--;
+    }
+    reverse(result.begin(), result.end());
+    return result;
+}
+string divideMethod(string n1, string n2, int ba) {
     return "0";
 }
-
 int main() {
-    string firstNumber, secondNumber;
-    int numberBase;
-    cin >> firstNumber >> secondNumber >> numberBase;
-    
-    string sumOutput = addNumbers(firstNumber, secondNumber, numberBase);
-    string productOutput = multiplyNumbers(firstNumber, secondNumber, numberBase);
-    string divisionOutput = divideNumbers(firstNumber, secondNumber, numberBase);
-    
-    cout << sumOutput << " " << productOutput << " " << divisionOutput << endl;
+    string n1, n2;
+    int ba;
+    cin >> n1 >> n2 >> ba;
+    string sum = addMethod(n1, n2, ba);
+    string product = multiplyMethod(n1, n2, ba);
+    string ratio = divideMethod(n1, n2, ba);
+    cout << sum << " " << product << " " << ratio << endl;
     return 0;
 }

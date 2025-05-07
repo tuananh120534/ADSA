@@ -1,54 +1,234 @@
 #include <iostream>
 #include <string>
-#include <algorithm>
-#include<cmath>
+#include <sstream>
 using namespace std;
-string multiplyMethod(string n1, string n2, int ba) {
-    int n = n1.size();
-    int m = n2.size();
-    string pr(n + m, '0');
-    for (int i = n - 1; i >= 0; i--) {
-        int carry = 0;
-        for (int j = m - 1; j >= 0; j--) {
-            int mu = (n1[i] - '0') * (n2[j] - '0') + (pr[i + j + 1] - '0') + carry;
-            carry = mu / ba;
-            pr[i + j + 1] = (mu % ba) + '0';
-        }
-        pr[i] += carry;
+
+class Node
+{
+public:
+    int key;
+    Node *left;
+    Node *right;
+    int height;
+};
+int max(int a, int b);
+int height(Node *N)
+{
+    if (N == NULL)
+        return 0;
+    return N->height;
+}
+int max(int a, int b) { return (a > b) ? a : b; }
+
+Node *newNode(int key)
+{
+    Node *node = new Node();
+    node->key = key;
+
+    node->left = NULL;
+    node->right = NULL;
+
+    node->height = 1;
+    return (node);
+}
+Node *rightRotate(Node *y) {
+    Node *x = y->left;
+    Node *T2 = x->right;
+
+
+    x->right = y;
+    y->left = T2;
+
+
+    y->height = max(height(y->left), height(y->right)) + 1;
+    x->height = max(height(x->left), height(x->right)) + 1;
+
+
+    return x;
+}
+
+Node *leftRotate(Node *x) {
+    Node *y = x->right;
+    Node *T2 = y->left;
+
+
+    y->left = x;
+    x->right = T2;
+
+
+    x->height = max(height(x->left), height(x->right)) + 1;
+    y->height = max(height(y->left), height(y->right)) + 1;
+
+
+    return y;
+}
+
+int getBalance(Node *N)
+{
+    if (N == NULL)
+        return 0;
+    return height(N->left) - height(N->right);
+}
+Node *insert(Node *node, int key)
+{
+    if (node == NULL)
+        return (newNode(key));
+    if (key < node->key)
+        node->left = insert(node->left, key);
+    else if (key > node->key)
+        node->right = insert(node->right, key);
+    else
+        return node;
+
+    node->height = 1 + max(height(node->left), height(node->right));
+
+    int balance = getBalance(node);
+
+    if (balance > 1 && key < node->left->key)
+        return rightRotate(node); // Right Right Case
+    if (balance < -1 && key > node->right->key)
+        return leftRotate(node); // Left Right Case
+    if (balance > 1 && key > node->left->key)
+    {
+        node->left = leftRotate(node->left);
+        return rightRotate(node);
     }
-    if (pr[0] == '0') {
-        pr.erase(pr.begin());
+    if (balance < -1 && key < node->right->key)
+    {
+        node->right = rightRotate(node->right);
+        return leftRotate(node);
+    }
+    return node;
+}
+
+Node *maxValueNode(Node *node) {
+    Node *current = node;
+    while (current->right != NULL) {
+        current = current->right;
+    }
+    return current;
+}
+
+Node *deleteNode(Node *root, int key) {
+    if (root == NULL)
+        return root;
+
+    if (key < root->key) {
+        root->left = deleteNode(root->left, key);
+    } else if (key > root->key) {
+        root->right = deleteNode(root->right, key);
+    } else {
+
+        if (root->left == NULL || root->right == NULL) {
+            Node *temp = root->left ? root->left : root->right;
+            if (temp == NULL) {
+
+                delete root;
+                root = NULL;
+            } else {
+
+                *root = *temp;
+                delete temp;
+            }
+
+        } else {
+
+            Node *temp = maxValueNode(root->left);
+        root->key = temp->key;
+        root->left = deleteNode(root->left, temp->key);
+        }
     }
 
-    return pr;
-}
-string addMethod(string n1, string n2, int ba) {
-    int carry = 0;
-    string result = "";
-    int a = n1.size() - 1;
-    int b = n2.size() - 1;
-    while (a >= 0 || b >= 0 || carry > 0) {
-        int firstDigit = (a >= 0) ? n1[a] - '0' : 0;
-        int secondDigit = (b >= 0) ? n2[b] - '0' : 0;
-        int s = firstDigit + secondDigit + carry;
-        carry = s / ba;
-        result += to_string(s % ba);
-        a--;
-        b--;
+    if (root == NULL)
+        return root;
+    root->height = max(height(root->left), height(root->right)) + 1;
+    int balance = getBalance(root);
+
+    if (balance > 1 && getBalance(root->left) >= 0) {
+        return rightRotate(root);
     }
-    reverse(result.begin(), result.end());
-    return result;
+    if (balance > 1 && getBalance(root->left) < 0) {
+        root->left = leftRotate(root->left);
+        return rightRotate(root);
+    }
+    if (balance < -1 && getBalance(root->right) <= 0) {
+        return leftRotate(root);
+    }
+    if (balance < -1 && getBalance(root->right) > 0) {
+        root->right = rightRotate(root->right);
+        return leftRotate(root);
+    }
+
+    return root;
 }
-string divideMethod(string n1, string n2, int ba) {
-    return "0";
+
+void preOrder(Node *root)
+{
+    if (root != NULL)
+    {
+        cout << root->key << " ";
+        preOrder(root->left);
+        preOrder(root->right);
+    }
 }
+void printPostorder(Node *node)
+{
+    if (node == NULL)
+        return;                  
+    printPostorder(node->left);
+    printPostorder(node->right);
+    cout << node->key << " ";
+}
+void printInorder(Node *node)
+{
+    if (node == NULL)
+        return;
+    printInorder(node->left);
+    cout << node->key << " ";
+    printInorder(node->right);
+}
+int extractIntegerWords(string str)
+{
+    size_t i = 0;
+    for (; i < str.length(); i++)
+    {
+        if (isdigit(str[i]))
+            break;
+    }
+    str = str.substr(i, str.length() - i);
+    int id = atoi(str.c_str());
+    return id;
+}
+
 int main() {
-    string n1, n2;
-    int ba;
-    cin >> n1 >> n2 >> ba;
-    string sum = addMethod(n1, n2, ba);
-    string product = multiplyMethod(n1, n2, ba);
-    string ratio = divideMethod(n1, n2, ba);
-    cout << sum << " " << product << " " << ratio << endl;
+    Node* root = NULL;
+    string command;
+
+    while (cin >> command) {
+        if (command[0] == 'A') { 
+            int num = stoi(command.substr(1));
+            root = insert(root, num);
+
+        } else if (command[0] == 'D') {
+            int num = stoi(command.substr(1));
+            root = deleteNode(root, num);
+
+        } else if (command == "IN") {
+            if (root != NULL) printInorder(root);
+            else cout << "EMPTY";
+            break;
+
+        } else if (command == "PRE") {
+            if (root != NULL) preOrder(root);
+            else cout << "EMPTY";
+            break;
+            
+        } else if (command == "POST") {
+            if (root != NULL) printPostorder(root);
+            else cout << "EMPTY";
+            break;
+        }
+    }
+
     return 0;
 }

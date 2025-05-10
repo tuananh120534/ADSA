@@ -3,226 +3,199 @@
 #include <sstream>
 using namespace std;
 
-class Node
-{
+class TreeNode {
 public:
-    int key;
-    Node *left;
-    Node *right;
-    int height;
+    int value;
+    TreeNode *leftChild;
+    TreeNode *rightChild;
+    int nodeHeight;
 };
-int max(int a, int b);
-int height(Node *N)
-{
-    if (N == NULL)
+
+int getMax(int a, int b);
+
+int getHeight(TreeNode *node) {
+    if (node == NULL)
         return 0;
-    return N->height;
+    return node->nodeHeight;
 }
-int max(int a, int b) { return (a > b) ? a : b; }
 
-Node *newNode(int key)
-{
-    Node *node = new Node();
-    node->key = key;
+int getMax(int a, int b) { return (a > b) ? a : b; }
 
-    node->left = NULL;
-    node->right = NULL;
-
-    node->height = 1;
-    return (node);
+TreeNode *createNode(int value) {
+    TreeNode *newNode = new TreeNode();
+    newNode->value = value;
+    newNode->leftChild = NULL;
+    newNode->rightChild = NULL;
+    newNode->nodeHeight = 1;
+    return newNode;
 }
-Node *rightRotate(Node *y) {
-    Node *x = y->left;
-    Node *T2 = x->right;
 
+TreeNode *rotateRight(TreeNode *y) {
+    TreeNode *x = y->leftChild;
+    TreeNode *T2 = x->rightChild;
 
-    x->right = y;
-    y->left = T2;
+    x->rightChild = y;
+    y->leftChild = T2;
 
-
-    y->height = max(height(y->left), height(y->right)) + 1;
-    x->height = max(height(x->left), height(x->right)) + 1;
-
+    y->nodeHeight = getMax(getHeight(y->leftChild), getHeight(y->rightChild)) + 1;
+    x->nodeHeight = getMax(getHeight(x->leftChild), getHeight(x->rightChild)) + 1;
 
     return x;
 }
 
-Node *leftRotate(Node *x) {
-    Node *y = x->right;
-    Node *T2 = y->left;
+TreeNode *rotateLeft(TreeNode *x) {
+    TreeNode *y = x->rightChild;
+    TreeNode *T2 = y->leftChild;
 
+    y->leftChild = x;
+    x->rightChild = T2;
 
-    y->left = x;
-    x->right = T2;
-
-
-    x->height = max(height(x->left), height(x->right)) + 1;
-    y->height = max(height(y->left), height(y->right)) + 1;
-
+    x->nodeHeight = getMax(getHeight(x->leftChild), getHeight(x->rightChild)) + 1;
+    y->nodeHeight = getMax(getHeight(y->leftChild), getHeight(y->rightChild)) + 1;
 
     return y;
 }
 
-int getBalance(Node *N)
-{
-    if (N == NULL)
-        return 0;
-    return height(N->left) - height(N->right);
-}
-Node *insert(Node *node, int key)
-{
+int getBalance(TreeNode *node) {
     if (node == NULL)
-        return (newNode(key));
-    if (key < node->key)
-        node->left = insert(node->left, key);
-    else if (key > node->key)
-        node->right = insert(node->right, key);
+        return 0;
+    return getHeight(node->leftChild) - getHeight(node->rightChild);
+}
+
+TreeNode *insert(TreeNode *node, int value) {
+    if (node == NULL)
+        return createNode(value);
+
+    if (value < node->value)
+        node->leftChild = insert(node->leftChild, value);
+    else if (value > node->value)
+        node->rightChild = insert(node->rightChild, value);
     else
         return node;
 
-    node->height = 1 + max(height(node->left), height(node->right));
-
+    node->nodeHeight = 1 + getMax(getHeight(node->leftChild), getHeight(node->rightChild));
     int balance = getBalance(node);
 
-    if (balance > 1 && key < node->left->key)
-        return rightRotate(node); // Right Right Case
-    if (balance < -1 && key > node->right->key)
-        return leftRotate(node); // Left Right Case
-    if (balance > 1 && key > node->left->key)
-    {
-        node->left = leftRotate(node->left);
-        return rightRotate(node);
+    if (balance > 1 && value < node->leftChild->value)
+        return rotateRight(node);
+
+    if (balance < -1 && value > node->rightChild->value)
+        return rotateLeft(node);
+
+    if (balance > 1 && value > node->leftChild->value) {
+        node->leftChild = rotateLeft(node->leftChild);
+        return rotateRight(node);
     }
-    if (balance < -1 && key < node->right->key)
-    {
-        node->right = rightRotate(node->right);
-        return leftRotate(node);
+
+    if (balance < -1 && value < node->rightChild->value) {
+        node->rightChild = rotateRight(node->rightChild);
+        return rotateLeft(node);
     }
+
     return node;
 }
 
-Node *maxValueNode(Node *node) {
-    Node *current = node;
-    while (current->right != NULL) {
-        current = current->right;
+TreeNode *getMaxNode(TreeNode *node) {
+    TreeNode *current = node;
+    while (current->rightChild != NULL) {
+        current = current->rightChild;
     }
     return current;
 }
 
-Node *deleteNode(Node *root, int key) {
+TreeNode *deleteNode(TreeNode *root, int value) {
     if (root == NULL)
         return root;
 
-    if (key < root->key) {
-        root->left = deleteNode(root->left, key);
-    } else if (key > root->key) {
-        root->right = deleteNode(root->right, key);
-    } else {
-
-        if (root->left == NULL || root->right == NULL) {
-            Node *temp = root->left ? root->left : root->right;
+    if (value < root->value)
+        root->leftChild = deleteNode(root->leftChild, value);
+    else if (value > root->value)
+        root->rightChild = deleteNode(root->rightChild, value);
+    else {
+        if (root->leftChild == NULL || root->rightChild == NULL) {
+            TreeNode *temp = root->leftChild ? root->leftChild : root->rightChild;
             if (temp == NULL) {
-
                 delete root;
                 root = NULL;
             } else {
-
                 *root = *temp;
                 delete temp;
             }
-
         } else {
-
-            Node *temp = maxValueNode(root->left);
-        root->key = temp->key;
-        root->left = deleteNode(root->left, temp->key);
+            TreeNode *temp = getMaxNode(root->leftChild);
+            root->value = temp->value;
+            root->leftChild = deleteNode(root->leftChild, temp->value);
         }
     }
 
     if (root == NULL)
         return root;
-    root->height = max(height(root->left), height(root->right)) + 1;
+
+    root->nodeHeight = getMax(getHeight(root->leftChild), getHeight(root->rightChild)) + 1;
     int balance = getBalance(root);
 
-    if (balance > 1 && getBalance(root->left) >= 0) {
-        return rightRotate(root);
+    if (balance > 1 && getBalance(root->leftChild) >= 0)
+        return rotateRight(root);
+
+    if (balance > 1 && getBalance(root->leftChild) < 0) {
+        root->leftChild = rotateLeft(root->leftChild);
+        return rotateRight(root);
     }
-    if (balance > 1 && getBalance(root->left) < 0) {
-        root->left = leftRotate(root->left);
-        return rightRotate(root);
-    }
-    if (balance < -1 && getBalance(root->right) <= 0) {
-        return leftRotate(root);
-    }
-    if (balance < -1 && getBalance(root->right) > 0) {
-        root->right = rightRotate(root->right);
-        return leftRotate(root);
+
+    if (balance < -1 && getBalance(root->rightChild) <= 0)
+        return rotateLeft(root);
+
+    if (balance < -1 && getBalance(root->rightChild) > 0) {
+        root->rightChild = rotateRight(root->rightChild);
+        return rotateLeft(root);
     }
 
     return root;
 }
 
-void preOrder(Node *root)
-{
-    if (root != NULL)
-    {
-        cout << root->key << " ";
-        preOrder(root->left);
-        preOrder(root->right);
+void printPreorder(TreeNode *node) {
+    if (node != NULL) {
+        cout << node->value << " ";
+        printPreorder(node->leftChild);
+        printPreorder(node->rightChild);
     }
 }
-void printPostorder(Node *node)
-{
-    if (node == NULL)
-        return;                  
-    printPostorder(node->left);
-    printPostorder(node->right);
-    cout << node->key << " ";
-}
-void printInorder(Node *node)
-{
+
+void printPostorder(TreeNode *node) {
     if (node == NULL)
         return;
-    printInorder(node->left);
-    cout << node->key << " ";
-    printInorder(node->right);
+    printPostorder(node->leftChild);
+    printPostorder(node->rightChild);
+    cout << node->value << " ";
 }
-int extractIntegerWords(string str)
-{
-    size_t i = 0;
-    for (; i < str.length(); i++)
-    {
-        if (isdigit(str[i]))
-            break;
-    }
-    str = str.substr(i, str.length() - i);
-    int id = atoi(str.c_str());
-    return id;
+
+void printInorder(TreeNode *node) {
+    if (node == NULL)
+        return;
+    printInorder(node->leftChild);
+    cout << node->value << " ";
+    printInorder(node->rightChild);
 }
 
 int main() {
-    Node* root = NULL;
+    TreeNode *root = NULL;
     string command;
 
     while (cin >> command) {
-        if (command[0] == 'A') { 
+        if (command[0] == 'A') {
             int num = stoi(command.substr(1));
             root = insert(root, num);
-
         } else if (command[0] == 'D') {
             int num = stoi(command.substr(1));
             root = deleteNode(root, num);
-
         } else if (command == "IN") {
             if (root != NULL) printInorder(root);
             else cout << "EMPTY";
             break;
-
         } else if (command == "PRE") {
-            if (root != NULL) preOrder(root);
+            if (root != NULL) printPreorder(root);
             else cout << "EMPTY";
             break;
-            
         } else if (command == "POST") {
             if (root != NULL) printPostorder(root);
             else cout << "EMPTY";
